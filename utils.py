@@ -10,6 +10,12 @@ DCAT = Namespace("http://www.w3.org/ns/dcat#")
 DCTERMS = Namespace("http://purl.org/dc/terms/")
 FOAF = Namespace("http://xmlns.com/foaf/0.1/")
 VCARD = Namespace("http://www.w3.org/2006/vcard/ns#")
+EDP = Namespace("https://europeandataportal.eu/voc#")
+SPDX = Namespace("http://spdx.org/rdf/terms#")
+ADMS = Namespace("http://www.w3.org/ns/adms#")
+DQV = Namespace("http://www.w3.org/ns/dqv#")
+SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
+SCHEMA = Namespace("http://schema.org/")
 
 # Mapping between current fields and DCAT-AP equivalents
 FIELD_MAPPINGS = {
@@ -49,6 +55,17 @@ FIELD_MAPPINGS = {
 def convert_to_dcat_ap(data):
     logging.debug("Starting convert_to_dcat_ap function")
     g = Graph()
+
+    # Bind namespaces
+    g.bind("dcat", DCAT)
+    g.bind("dcterms", DCTERMS)
+    g.bind("vcard", VCARD)
+    g.bind("edp", EDP)
+    g.bind("spdx", SPDX)
+    g.bind("adms", ADMS)
+    g.bind("dqv", DQV)
+    g.bind("skos", SKOS)
+    g.bind("schema", SCHEMA)
 
     # Create a dataset
     dataset = URIRef("http://example.org/dataset/blue-tongue")

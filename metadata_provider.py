@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 class MyMetadataProvider:
     # Method to list records, only method used by data.europa harvester
-    def listRecords(self, metadataPrefix='oai_dc', from_=None, until=None, set_=None):
+    def listRecords(self, metadataPrefix='dcat_ap', from_=None, until=None, set_=None):
         logging.debug("Fetching data from API")
         # Fetch data from the dataset endpoint
         data = main.fetch_data(
@@ -28,34 +28,18 @@ class MyMetadataProvider:
         logging.debug(f"RDF string: {rdf_string}")
 
         # Parse RDF string into XML element
-        rdf_element = fromstring(bytes(rdf_string, encoding='utf-8'))
+        #rdf_element = fromstring(bytes(rdf_string, encoding='utf-8'))
 
-        logging.debug(f"Parsed RDF Element: {tostring(rdf_element, pretty_print=True).decode('utf-8')}")
+        #logging.debug(f"Parsed RDF Element: {tostring(rdf_element, pretty_print=True).decode('utf-8')}")
 
         # Create a header
-        identifier = "id1"
-        datestamp = datetime.utcnow().isoformat() + "Z"
+        
         header_element = Element("header")
-        header = Header(deleted=False, element=header_element, identifier=identifier, datestamp=datetime.utcnow(), setspec=[])
+        header = Header(deleted=False, element=header_element, identifier="id1", datestamp=datetime.utcnow(), setspec=[])
 
-        # Create metadata element and include RDF elements as children of oai_dc:dc
         metadata_element = Element("metadata")
-        oai_dc_element = SubElement(metadata_element, "{http://www.openarchives.org/OAI/2.0/oai_dc/}dc", nsmap={
-            "oai_dc": "http://www.openarchives.org/OAI/2.0/oai_dc/",
-            "dc": "http://purl.org/dc/elements/1.1/",
-            "xsi": "http://www.w3.org/2001/XMLSchema-instance"
-        })
-        oai_dc_element.set("{http://www.w3.org/2001/XMLSchema-instance}schemaLocation",
-                           "http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd")
-
-        # Append children of rdf_element to oai_dc_element
-        for child in rdf_element:
-            oai_dc_element.append(child)
-
-        logging.debug(f"Final OAI_DC Element: {tostring(oai_dc_element, pretty_print=True).decode('utf-8')}")
-
-        metadata = Metadata(element=metadata_element, map={})
-        logging.debug(f"Metadata Element: {tostring(metadata_element, pretty_print=True).decode('utf-8')}")
+        metadata = Metadata(element=metadata_element, map={"rdf": rdf_string})
+    
 
         return [(header, metadata, [])], None
 

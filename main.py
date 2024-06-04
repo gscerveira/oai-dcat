@@ -22,6 +22,8 @@ def fetch_data(url):
 @app.post("/oai")
 def oai(request: Request):
     params = dict(request.query_params)
+    if 'metadataPrefix' not in params:
+        params['metadataPrefix'] = 'dcat_ap'
     response = oai_server.oai_server.handleRequest(params)
     logging.debug(f"OAI-PMH Response: {response}")
     return Response(content=response, media_type="text/xml")
