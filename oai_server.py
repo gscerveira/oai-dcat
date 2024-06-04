@@ -1,7 +1,14 @@
 from oaipmh.server import ServerBase, oai_dc_writer
 from oaipmh.metadata import MetadataRegistry, oai_dc_reader
 import metadata_provider
+from lxml.etree import fromstring
 
+# Create writer for dcat_ap metadata 
+def dcat_ap_writer(metadata_element, metadata):
+    rdf_string = metadata["rdf"]
+    rdf_element = fromstring(rdf_string)
+    for child in rdf_element:
+        metadata_element.append(child)
 
 class MyServer(ServerBase):
     def __init__(self):
