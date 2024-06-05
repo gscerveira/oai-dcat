@@ -2,6 +2,7 @@ import logging
 from fastapi import FastAPI, Request, Response
 import httpx
 import oai_server
+import re
 
 # Logging config
 logging.basicConfig(level=logging.DEBUG)
@@ -26,6 +27,8 @@ def oai(request: Request):
         params['metadataPrefix'] = 'dcat_ap'
     response = oai_server.oai_server.handleRequest(params)
     logging.debug(f"OAI-PMH Response: {response}")
+    # Replace date in datestamp by empty string
+    response = re.sub(b'<datestamp>.*</datestamp>', b'<datestamp></datestamp>', response)
     return Response(content=response, media_type="text/xml")
 
 

@@ -9,8 +9,9 @@ def dcat_ap_writer(metadata_element, metadata):
     rdf_string = metadata["rdf"]
     rdf_element = fromstring(bytes(rdf_string, encoding='utf-8'))
     
-    metadata_element.append(rdf_element) 
-    logging.debug(f"Metadata Element: {tostring(metadata_element, pretty_print=True).decode('utf-8')}")
+    for child in rdf_element:
+        metadata_element.append(child)
+        logging.debug(f"Metadata Element: {tostring(metadata_element, pretty_print=True).decode('utf-8')}")
 
 
 # Create reader for dcat_ap metadata

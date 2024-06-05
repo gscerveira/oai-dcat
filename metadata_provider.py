@@ -27,15 +27,10 @@ class MyMetadataProvider:
         rdf_string = rdf_graph.serialize(format='xml')
         logging.debug(f"RDF string: {rdf_string}")
 
-        # Parse RDF string into XML element
-        #rdf_element = fromstring(bytes(rdf_string, encoding='utf-8'))
-
-        #logging.debug(f"Parsed RDF Element: {tostring(rdf_element, pretty_print=True).decode('utf-8')}")
-
         # Create a header
         
         header_element = Element("header")
-        header = Header(deleted=False, element=header_element, identifier="id1", datestamp=datetime.utcnow(), setspec=[])
+        header = Header(deleted=False, element=header_element, identifier="", datestamp=datetime.utcnow(), setspec=[])
 
         metadata_element = Element("metadata")
         metadata = Metadata(element=metadata_element, map={"rdf": rdf_string})
@@ -47,7 +42,7 @@ class MyMetadataProvider:
     def identify(self):
         return Identify(
             repositoryName='My Repository',  # Name of the repository
-            baseURL='http://myserver.com/oai',  # Base URL of the OAI-PMH endpoint
+            baseURL='',  # Base URL of the OAI-PMH endpoint
             protocolVersion='2.0',  # OAI-PMH protocol version
             adminEmails=['admin@myserver.com'],  # List of admin email addresses
             earliestDatestamp=datetime(2024, 1, 1),  # Earliest datestamp for records
