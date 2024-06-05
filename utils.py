@@ -32,7 +32,7 @@ FIELD_MAPPINGS = {
     "dataset.metadata.update_frequency": (DCTERMS.accrualPeriodicity, Literal),
     "dataset.metadata.license": (DCTERMS.license, URIRef),
     "dataset.metadata.id": (DCTERMS.identifier, Literal),
-    "dataset.products.monthly.catalog_dir": (DCAT.accessURL, URIRef),
+    "url": (DCAT.accessURL, URIRef),
     "dataset.products.monthly.description": (DCTERMS.description, Literal),
     # Add mappings for missing fields
     "dataset.metadata.keywords": (DCAT.keyword, Literal),
@@ -52,8 +52,12 @@ FIELD_MAPPINGS = {
 }
 
 
-def convert_to_dcat_ap(data):
+def convert_to_dcat_ap(data, url):
     logging.debug("Starting convert_to_dcat_ap function")
+
+    # Add the URL to the data
+    data["url"] = url
+    
     g = Graph()
 
     # Bind namespaces

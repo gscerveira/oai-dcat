@@ -21,7 +21,7 @@ class MyMetadataProvider:
         logging.debug(f"Fetched data: {data}")
 
         # Convert to DCAT-AP format
-        rdf_graph = convert_to_dcat_ap(data)
+        rdf_graph = convert_to_dcat_ap(data, "https://sebastien-datalake.cmcc.it/api/v2/datasets/blue-tongue")
 
         # Serialize RDF graph
         rdf_string = rdf_graph.serialize(format='xml')

@@ -28,7 +28,7 @@ def oai(request: Request):
     response = oai_server.oai_server.handleRequest(params)
     logging.debug(f"OAI-PMH Response: {response}")
     # Replace date in datestamp by empty string
-    response = re.sub(b'<datestamp>.*</datestamp>', b'<datestamp></datestamp>', response)
+    response = re.sub(b'<datestamp>.*</datestamp>', b'', response)
     return Response(content=response, media_type="text/xml")
 
 
