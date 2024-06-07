@@ -1,5 +1,5 @@
 from rdflib import Graph, Literal, Namespace, RDF, URIRef, BNode
-from rdflib.namespace import DCAT, DCTERMS, FOAF
+from rdflib.namespace import DCAT, DCTERMS, FOAF, RDF, RDFS
 import logging
 
 # Logging config
@@ -7,7 +7,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 # Namespaces for DCAT-AP
 DCAT = Namespace("http://www.w3.org/ns/dcat#")
-DCTERMS = Namespace("http://purl.org/dc/terms/")
+DCT = Namespace("http://purl.org/dc/terms/")
 FOAF = Namespace("http://xmlns.com/foaf/0.1/")
 VCARD = Namespace("http://www.w3.org/2006/vcard/ns#")
 EDP = Namespace("https://europeandataportal.eu/voc#")
@@ -19,35 +19,35 @@ SCHEMA = Namespace("http://schema.org/")
 
 # Mapping between current fields and DCAT-AP equivalents
 FIELD_MAPPINGS = {
-    "dataset.metadata.description": (DCTERMS.description, Literal),
+    "dataset.metadata.description": (DCT.description, Literal),
     "dataset.metadata.contact.name": (VCARD.fn, Literal),
     "dataset.metadata.contact.email": (VCARD.hasEmail, lambda x: URIRef(f"mailto:{x}")),
     "dataset.metadata.contact.webpage": (VCARD.hasURL, URIRef),
-    "dataset.metadata.label": (DCTERMS.title, Literal),
-    "dataset.metadata.doi": (DCTERMS.identifier, Literal),
+    "dataset.metadata.label": (DCT.title, Literal),
+    "dataset.metadata.doi": (DCT.identifier, Literal),
     "dataset.metadata.publication_date": (
-        DCTERMS.issued,
-        lambda x: Literal(x, datatype=DCTERMS.W3CDTF),
+        DCT.issued,
+        lambda x: Literal(x, datatype=DCT.W3CDTF),
     ),
-    "dataset.metadata.update_frequency": (DCTERMS.accrualPeriodicity, Literal),
-    "dataset.metadata.license": (DCTERMS.license, URIRef),
-    "dataset.metadata.id": (DCTERMS.identifier, Literal),
+    "dataset.metadata.update_frequency": (DCT.accrualPeriodicity, Literal),
+    "dataset.metadata.license": (DCT.license, URIRef),
+    "dataset.metadata.id": (DCT.identifier, Literal),
     "url": (DCAT.accessURL, URIRef),
-    "dataset.products.monthly.description": (DCTERMS.description, Literal),
+    "dataset.products.monthly.description": (DCT.description, Literal),
     # Add mappings for missing fields
     "dataset.metadata.keywords": (DCAT.keyword, Literal),
     "dataset.metadata.categories": (DCAT.theme, Literal),
-    "dataset.metadata.spatial_coverage": (DCTERMS.spatial, Literal),
-    "dataset.metadata.temporal_coverage": (DCTERMS.temporal, Literal),
+    "dataset.metadata.spatial_coverage": (DCT.spatial, Literal),
+    "dataset.metadata.temporal_coverage": (DCT.temporal, Literal),
     "dataset.products.monthly.download_url": (DCAT.downloadURL, URIRef),
-    "dataset.products.monthly.format": (DCTERMS.format, Literal),
+    "dataset.products.monthly.format": (DCT.format, Literal),
     "dataset.products.monthly.media_type": (DCAT.mediaType, Literal),
-    "dataset.metadata.access_rights": (DCTERMS.accessRights, Literal),
-    "dataset.metadata.rights": (DCTERMS.rights, Literal),
+    "dataset.metadata.access_rights": (DCT.accessRights, Literal),
+    "dataset.metadata.rights": (DCT.rights, Literal),
     "dataset.products.monthly.file_size": (DCAT.byteSize, Literal),
     "dataset.metadata.modification_date": (
-        DCTERMS.modified,
-        lambda x: Literal(x, datatype=DCTERMS.W3CDTF),
+        DCT.modified,
+        lambda x: Literal(x, datatype=DCT.W3CDTF),
     ),
 }
 
@@ -62,7 +62,8 @@ def convert_to_dcat_ap(data, url):
 
     # Bind namespaces
     g.bind("dcat", DCAT)
-    g.bind("dcterms", DCTERMS)
+    g.bind("DCT", DCT)
+    g.bind("foaf", FOAF)
     g.bind("vcard", VCARD)
     g.bind("edp", EDP)
     g.bind("spdx", SPDX)
@@ -95,8 +96,8 @@ def convert_to_dcat_ap(data, url):
             continue
 
     # Handle building of contactPoint separately
-    if "metadata" in data and "contact" in data["metadata"]:
-        contact = data["metadata"]["contact"]
+    if "metadata" in data["dataset"] and "contact" in data["dataset"]["metadata"]:
+        contact = data["dataset"]["metadata"]["contact"]
         contact_point = BNode()
         g.add((dataset, DCAT.contactPoint, contact_point))
 
