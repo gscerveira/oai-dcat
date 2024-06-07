@@ -51,6 +51,24 @@ FIELD_MAPPINGS = {
     ),
 }
 
+def add_field_to_graph(graph, node, data, field_mappings):
+    for field_path, (dcat_property, converter) in field_mappings.items():
+        # Navigate the data using the field path (e.g. "dataset.metadata.description")
+        value = data
+        try:
+            for part in field_path.split("."):
+                value = value[part]
+            # Add the value to the graph if it exists and isn't equal to 'null'
+            if value is not None and value != "null":
+                logging.debug(f"Adding field {field_path} with value {value}")
+                graph.add((node, dcat_property, converter(value)))
+            else:
+                logging.debug(f"Field {field_path} is None or 'null'")
+
+        except (KeyError, TypeError) as e:
+            # Field not found, continue to next field
+            logging.debug(f"Field {field_path} not found: {e}")
+            continue
 
 def convert_to_dcat_ap(data, url):
     logging.debug("Starting convert_to_dcat_ap function")
@@ -101,19 +119,8 @@ def convert_to_dcat_ap(data, url):
         contact_point = BNode()
         g.add((dataset, DCAT.contactPoint, contact_point))
 
-        for field_path, (dcat_property, converter) in FIELD_MAPPINGS.items():
-            if field_path.startswith("dataset.metadata.contact."):
-                value = contact
-                try:
-                    for part in field_path.split("."):
-                        value = value[part]
-                    if value is not None and value != "null":
-                        logging.debug(f"Adding contact field {field_path} with value {value}")
-                        g.add((contact_point, dcat_property, converter(value)))
-                    else:
-                        logging.debug(f"Contact field {field_path} is None or 'null'")
-                except (KeyError, TypeError) as e:
-                    logging.debug(f"Contact field {field_path} not found: {e}")
-                    continue
+        contact_field_mappings = {key: value for key, value in FIELD_MAPPINGS.items() 
+                                  if key.startswith("dataset.metadata.contact.")}
+        add_field_to_graph(g, contact_point, contact, contact_field_mappings)
 
     return g
