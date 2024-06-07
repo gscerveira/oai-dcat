@@ -17,6 +17,87 @@ DQV = Namespace("http://www.w3.org/ns/dqv#")
 SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
 SCHEMA = Namespace("http://schema.org/")
 
+class ContactPoint:
+    def __init__(self, name=None, email=None, webpage=None):
+        self.name = name
+        self.email = email
+        self.webpage = webpage
+
+class Distribution:
+    def __init__(self, access_url=None, description=None, download_url=None,
+                 media_type=None, format=None, rights=None, license=None, identifier=None):
+        self.access_url = access_url
+        self.description = description
+        self.download_url = download_url
+        self.media_type = media_type
+        self.format = format
+        self.rights = rights
+        self.license = license
+        self.identifier = identifier
+
+class Dataset:
+    def __init__(self, uri, title=None, description=None, issued=None, identifier=None, contact_point=None):
+        self.uri = uri
+        self.title = title
+        self.description = description
+        self.issued = issued
+        self.identifier = identifier
+        self.contact_point = contact_point
+        self.distributions = []
+
+    def add_distribution(self, distribution):
+        self.distributions.append(distribution)
+
+    def to_graph(self, g):
+        dataset = URIRef(self.uri)
+        g.add((dataset, RDF.type, DCAT.Dataset))
+        if self.title:
+            g.add((dataset, DCT.title, Literal(self.title)))
+        if self.description:
+            g.add((dataset, DCT.description, Literal(self.description)))
+        if self.issued:
+            g.add((dataset, DCTERMS.issued, Literal(self.issued, datatype=DCTERMS.W3CDTF)))
+        if self.identifier:
+            g.add((dataset, DCTERMS.identifier, Literal(self.identifier)))
+
+        if self.contact_point:
+            contact_bnode = BNode()
+            g.add((dataset, DCAT.contactPoint, contact_bnode))
+            if self.contact_point.name:
+                g.add((contact_bnode, VCARD.fn, Literal(self.contact_point.name)))
+            if self.contact_point.email:
+                g.add((contact_bnode, VCARD.hasEmail, URIRef(f"mailto:{self.contact_point.email}")))
+            if self.contact_point.webpage:
+                g.add((contact_bnode, VCARD.hasURL, URIRef(self.contact_point.webpage)))
+
+        for dist in self.distributions:
+            distribution_bnode = BNode()
+            g.add((dataset, DCAT.distribution, distribution_bnode))
+            if dist.access_url:
+                g.add((distribution_bnode, DCAT.accessURL, URIRef(dist.access_url)))
+            if dist.description:
+                g.add((distribution_bnode, DCTERMS.description, Literal(dist.description)))
+            if dist.download_url:
+                g.add((distribution_bnode, DCAT.downloadURL, URIRef(dist.download_url)))
+            if dist.media_type:
+                g.add((distribution_bnode, DCTERMS.mediaType, URIRef(dist.media_type)))
+            if dist.format:
+                g.add((distribution_bnode, DCTERMS.format, URIRef(dist.format)))
+            if dist.rights:
+                rights_bnode = BNode()
+                g.add((distribution_bnode, DCTERMS.rights, rights_bnode))
+                g.add((rights_bnode, RDF.type, DCTERMS.RightsStatement))
+                g.add((rights_bnode, DCTERMS.rights, URIRef(dist.rights)))
+            if dist.license:
+                license_bnode = BNode()
+                g.add((distribution_bnode, DCTERMS.license, license_bnode))
+                g.add((license_bnode, RDF.type, DCTERMS.LicenseDocument))
+                g.add((license_bnode, DCTERMS.license, URIRef(dist.license)))
+            if dist.identifier:
+                g.add((distribution_bnode, DCTERMS.identifier, Literal(dist.identifier)))
+
+        return g
+
 # Mapping between current fields and DCAT-AP equivalents
 FIELD_MAPPINGS = {
     "dataset.metadata.description": (DCT.description, Literal),
@@ -95,23 +176,7 @@ def convert_to_dcat_ap(data, url):
     g.add((dataset, RDF.type, DCAT.Dataset))
 
     # Iterate over field mappings, add them to the RDF graph if present
-    for field_path, (dcat_property, converter) in FIELD_MAPPINGS.items():
-        # Navigate the data using the field path
-        value = data
-        try:
-            for part in field_path.split("."):
-                value = value[part]
-            # Add the value to the graph if it exists and isn't equal to 'null'
-            if value is not None and value != "null":
-                logging.debug(f"Adding field {field_path} with value {value}")
-                g.add((dataset, dcat_property, converter(value)))
-            else:
-                logging.debug(f"Field {field_path} is None or 'null'")
-
-        except (KeyError, TypeError) as e:
-            # Field not found, continue to next field
-            logging.debug(f"Field {field_path} not found: {e}")
-            continue
+    add_field_to_graph(g, dataset, data, FIELD_MAPPINGS)
 
     # Handle building of contactPoint separately
     if "metadata" in data["dataset"] and "contact" in data["dataset"]["metadata"]:
