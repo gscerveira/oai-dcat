@@ -99,7 +99,7 @@ class Dataset:
         return g
 
 # Mapping between current fields and DCAT-AP equivalents
-FIELD_MAPPINGS = {
+""" FIELD_MAPPINGS = {
     "dataset.metadata.description": (DCT.description, Literal),
     "dataset.metadata.contact.name": (VCARD.fn, Literal),
     "dataset.metadata.contact.email": (VCARD.hasEmail, lambda x: URIRef(f"mailto:{x}")),
@@ -149,7 +149,7 @@ def add_field_to_graph(graph, node, data, field_mappings):
         except (KeyError, TypeError) as e:
             # Field not found, continue to next field
             logging.debug(f"Field {field_path} not found: {e}")
-            continue
+            continue """
 
 def convert_to_dcat_ap(data, url):
     logging.debug("Starting convert_to_dcat_ap function")
@@ -172,8 +172,38 @@ def convert_to_dcat_ap(data, url):
     g.bind("schema", SCHEMA)
 
     # Create a dataset
-    dataset = URIRef("http://example.org/dataset/blue-tongue")
-    g.add((dataset, RDF.type, DCAT.Dataset))
+    dataset_uri = "http://example.org/dataset/blue-tongue"
+    
+    # Create dataset
+    dataset = Dataset(
+        uri=dataset_uri,
+        title=data.get("dataset", {}).get("metadata", {}).get("label"),
+        description=data.get("dataset", {}).get("metadata", {}).get("description"),
+        issued=data.get("dataset", {}).get("metadata", {}).get("publication_date"),
+        identifier=data.get("dataset", {}).get("metadata", {}).get("id"),
+    )
+
+    # Create contact point
+    contact = data.get("dataset", {}).get("metadata", {}).get("contact")
+    contact_point = ContactPoint(
+        name=contact.get("name"),
+        email=contact.get("email"),
+        webpage=contact.get("webpage"),
+    )
+    dataset.contact_point = contact_point
+
+    # Create distributions
+    products = data.get("dataset", {}).get("products", {}).get("monthly", {})
+    distribution = Distribution(
+        access_url=url,
+        description=products.get("description"),
+        )
+    dataset.add_distribution(distribution)
+
+    # Add dataset to graph
+    dataset.to_graph(g)
+
+    """ g.add((dataset, RDF.type, DCAT.Dataset))
 
     # Iterate over field mappings, add them to the RDF graph if present
     add_field_to_graph(g, dataset, data, FIELD_MAPPINGS)
@@ -186,6 +216,6 @@ def convert_to_dcat_ap(data, url):
 
         contact_field_mappings = {key: value for key, value in FIELD_MAPPINGS.items() 
                                   if key.startswith("dataset.metadata.contact.")}
-        add_field_to_graph(g, contact_point, contact, contact_field_mappings)
+        add_field_to_graph(g, contact_point, contact, contact_field_mappings) """
 
     return g

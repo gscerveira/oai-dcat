@@ -24,7 +24,7 @@ class MyMetadataProvider:
         rdf_graph = convert_to_dcat_ap(data, "https://sebastien-datalake.cmcc.it/api/v2/datasets/blue-tongue")
 
         # Serialize RDF graph
-        rdf_string = rdf_graph.serialize(format='xml')
+        rdf_string = rdf_graph.serialize(format='pretty-xml')
         logging.debug(f"RDF string: {rdf_string}")
 
         # Create a header
