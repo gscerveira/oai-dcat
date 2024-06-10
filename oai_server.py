@@ -4,7 +4,7 @@ import metadata_provider
 from lxml.etree import fromstring, tostring
 import logging
 
-# Create writer for dcat_ap metadata 
+# Function to write metadata in dcat_ap format (RDF/XML), otherwise it would use the default format (oai_dc) 
 def dcat_ap_writer(metadata_element, metadata):
     rdf_string = metadata["rdf"]
     rdf_element = fromstring(bytes(rdf_string, encoding='utf-8'))
@@ -19,6 +19,7 @@ def dcat_ap_reader(element):
     rdf_string = tostring(element, encoding='unicode')
     return {"rdf": rdf_string}
 
+# Server class, it defines writers and readers, as well as the metadata provider (metadata_provider.py)
 class MyServer(ServerBase):
     def __init__(self):
         metadata_registry = MetadataRegistry()

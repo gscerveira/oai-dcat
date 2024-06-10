@@ -1,11 +1,11 @@
 from rdflib import Graph, Literal, Namespace, RDF, URIRef, BNode
-from rdflib.namespace import DCAT, DCTERMS, FOAF, RDF, RDFS
+from rdflib.namespace import DCAT, DCTERMS, FOAF, RDF
 import logging
 
 # Logging config
 logging.basicConfig(level=logging.DEBUG)
 
-# Namespaces for DCAT-AP
+# Namespaces for DCAT-AP, to be binded to the RDF graph
 DCAT = Namespace("http://www.w3.org/ns/dcat#")
 DCT = Namespace("http://purl.org/dc/terms/")
 FOAF = Namespace("http://xmlns.com/foaf/0.1/")
@@ -16,6 +16,8 @@ ADMS = Namespace("http://www.w3.org/ns/adms#")
 DQV = Namespace("http://www.w3.org/ns/dqv#")
 SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
 SCHEMA = Namespace("http://schema.org/")
+
+# Define classes for DCAT-AP entities (Dataset, Distribution and ContactPoint)
 
 class ContactPoint:
     def __init__(self, name=None, email=None, webpage=None):
@@ -48,6 +50,7 @@ class Dataset:
     def add_distribution(self, distribution):
         self.distributions.append(distribution)
 
+    # Build the RDF graph for the dataset
     def to_graph(self, g):
         dataset = URIRef(self.uri)
         g.add((dataset, RDF.type, DCAT.Dataset))
@@ -98,59 +101,6 @@ class Dataset:
 
         return g
 
-# Mapping between current fields and DCAT-AP equivalents
-""" FIELD_MAPPINGS = {
-    "dataset.metadata.description": (DCT.description, Literal),
-    "dataset.metadata.contact.name": (VCARD.fn, Literal),
-    "dataset.metadata.contact.email": (VCARD.hasEmail, lambda x: URIRef(f"mailto:{x}")),
-    "dataset.metadata.contact.webpage": (VCARD.hasURL, URIRef),
-    "dataset.metadata.label": (DCT.title, Literal),
-    "dataset.metadata.doi": (DCT.identifier, Literal),
-    "dataset.metadata.publication_date": (
-        DCT.issued,
-        lambda x: Literal(x, datatype=DCT.W3CDTF),
-    ),
-    "dataset.metadata.update_frequency": (DCT.accrualPeriodicity, Literal),
-    "dataset.metadata.license": (DCT.license, URIRef),
-    "dataset.metadata.id": (DCT.identifier, Literal),
-    "url": (DCAT.accessURL, URIRef),
-    "dataset.products.monthly.description": (DCT.description, Literal),
-    # Add mappings for missing fields
-    "dataset.metadata.keywords": (DCAT.keyword, Literal),
-    "dataset.metadata.categories": (DCAT.theme, Literal),
-    "dataset.metadata.spatial_coverage": (DCT.spatial, Literal),
-    "dataset.metadata.temporal_coverage": (DCT.temporal, Literal),
-    "dataset.products.monthly.download_url": (DCAT.downloadURL, URIRef),
-    "dataset.products.monthly.format": (DCT.format, Literal),
-    "dataset.products.monthly.media_type": (DCAT.mediaType, Literal),
-    "dataset.metadata.access_rights": (DCT.accessRights, Literal),
-    "dataset.metadata.rights": (DCT.rights, Literal),
-    "dataset.products.monthly.file_size": (DCAT.byteSize, Literal),
-    "dataset.metadata.modification_date": (
-        DCT.modified,
-        lambda x: Literal(x, datatype=DCT.W3CDTF),
-    ),
-}
-
-def add_field_to_graph(graph, node, data, field_mappings):
-    for field_path, (dcat_property, converter) in field_mappings.items():
-        # Navigate the data using the field path (e.g. "dataset.metadata.description")
-        value = data
-        try:
-            for part in field_path.split("."):
-                value = value[part]
-            # Add the value to the graph if it exists and isn't equal to 'null'
-            if value is not None and value != "null":
-                logging.debug(f"Adding field {field_path} with value {value}")
-                graph.add((node, dcat_property, converter(value)))
-            else:
-                logging.debug(f"Field {field_path} is None or 'null'")
-
-        except (KeyError, TypeError) as e:
-            # Field not found, continue to next field
-            logging.debug(f"Field {field_path} not found: {e}")
-            continue """
-
 def convert_to_dcat_ap(data, url):
     logging.debug("Starting convert_to_dcat_ap function")
 
@@ -171,10 +121,10 @@ def convert_to_dcat_ap(data, url):
     g.bind("skos", SKOS)
     g.bind("schema", SCHEMA)
 
-    # Create a dataset
+    # Placeholder URI
     dataset_uri = "http://example.org/dataset/blue-tongue"
     
-    # Create dataset
+    # Create dataset and convert the field names to DCAT-AP
     dataset = Dataset(
         uri=dataset_uri,
         title=data.get("dataset", {}).get("metadata", {}).get("label"),
@@ -183,7 +133,7 @@ def convert_to_dcat_ap(data, url):
         identifier=data.get("dataset", {}).get("metadata", {}).get("id"),
     )
 
-    # Create contact point
+    # Create contact point and convert the field names to DCAT-AP
     contact = data.get("dataset", {}).get("metadata", {}).get("contact")
     contact_point = ContactPoint(
         name=contact.get("name"),
@@ -192,7 +142,7 @@ def convert_to_dcat_ap(data, url):
     )
     dataset.contact_point = contact_point
 
-    # Create distributions
+    # Create distributions and convert the field names to DCAT-AP
     products = data.get("dataset", {}).get("products", {}).get("monthly", {})
     distribution = Distribution(
         access_url=url,
@@ -202,20 +152,5 @@ def convert_to_dcat_ap(data, url):
 
     # Add dataset to graph
     dataset.to_graph(g)
-
-    """ g.add((dataset, RDF.type, DCAT.Dataset))
-
-    # Iterate over field mappings, add them to the RDF graph if present
-    add_field_to_graph(g, dataset, data, FIELD_MAPPINGS)
-
-    # Handle building of contactPoint separately
-    if "metadata" in data["dataset"] and "contact" in data["dataset"]["metadata"]:
-        contact = data["dataset"]["metadata"]["contact"]
-        contact_point = BNode()
-        g.add((dataset, DCAT.contactPoint, contact_point))
-
-        contact_field_mappings = {key: value for key, value in FIELD_MAPPINGS.items() 
-                                  if key.startswith("dataset.metadata.contact.")}
-        add_field_to_graph(g, contact_point, contact, contact_field_mappings) """
 
     return g

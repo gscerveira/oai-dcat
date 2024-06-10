@@ -1,7 +1,7 @@
 from oaipmh.common import Identify, Metadata, Header
 from datetime import datetime
 from lxml import etree
-from lxml.etree import Element, SubElement, fromstring, tostring
+from lxml.etree import Element
 import main
 from utils import convert_to_dcat_ap
 import logging
@@ -9,35 +9,38 @@ import logging
 # Logging config
 logging.basicConfig(level=logging.DEBUG)
 
-
+# Each method in this class is a verb from the OAI-PMH protocol. Only listRecords is used by the data.europa harvester
 class MyMetadataProvider:
     # Method to list records, only method used by data.europa harvester
     def listRecords(self, metadataPrefix='dcat_ap', from_=None, until=None, set_=None):
         logging.debug("Fetching data from API")
         # Fetch data from the dataset endpoint
+        # TODO: Refactor to fetch from all endpoints, or get data directly if this code is integrated in the data lake system 
         data = main.fetch_data(
             "https://sebastien-datalake.cmcc.it/api/v2/datasets/blue-tongue"
         )
         logging.debug(f"Fetched data: {data}")
 
-        # Convert to DCAT-AP format
+        # Convert to RDF graph with proper DCAT-AP fields (URL is being used to fill the accessURL field)
         rdf_graph = convert_to_dcat_ap(data, "https://sebastien-datalake.cmcc.it/api/v2/datasets/blue-tongue")
 
-        # Serialize RDF graph
+        # Serialize the RDF graph into a string, 'pretty-xml' format makes it more readable
         rdf_string = rdf_graph.serialize(format='pretty-xml')
         logging.debug(f"RDF string: {rdf_string}")
 
-        # Create a header
-        
+        # Create a header (mandatory for OAI-PMH)
         header_element = Element("header")
         header = Header(deleted=False, element=header_element, identifier="", datestamp=datetime.utcnow(), setspec=[])
 
+        # Create metadata element and fill it with the RDF/XML string
         metadata_element = Element("metadata")
         metadata = Metadata(element=metadata_element, map={"rdf": rdf_string})
     
 
         return [(header, metadata, [])], None
 
+    # The remaining methods are only present because they are mandatory for the OAI-PMH protocol
+    
     # Minimal implementation for identify
     def identify(self):
         return Identify(
