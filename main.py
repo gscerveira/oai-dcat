@@ -26,7 +26,7 @@ def oai(request: Request, dataset_id: str):
     params = dict(request.query_params)
 
     # Add dataset_id to the parameters as "set_", which is a parameter from the OAI-PMH protocol
-    params['set_'] = dataset_id
+    params['set'] = dataset_id
 
     # Making sure it uses the dcat_ap metadata prefix
     if 'metadataPrefix' not in params:
