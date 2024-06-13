@@ -6,6 +6,8 @@ import main
 from utils import convert_to_dcat_ap
 import logging
 
+BASE_URL = "https://sebastien-datalake.cmcc.it/api/v2/datasets/"
+
 # Logging config
 logging.basicConfig(level=logging.DEBUG)
 
@@ -17,12 +19,12 @@ class MyMetadataProvider:
         # Fetch data from the dataset endpoint
         # TODO: Refactor to fetch from all endpoints, or get data directly if this code is integrated in the data lake system 
         data = main.fetch_data(
-            f"https://sebastien-datalake.cmcc.it/api/v2/datasets/{set}"
+            f"{BASE_URL}{set}"
         )
         logging.debug(f"Fetched data: {data}")
 
         # Convert to RDF graph with proper DCAT-AP fields (URL is being used to fill the accessURL field)
-        rdf_graph = convert_to_dcat_ap(data, "https://sebastien-datalake.cmcc.it/api/v2/datasets/blue-tongue")
+        rdf_graph = convert_to_dcat_ap(data, f"{BASE_URL}{set}")
 
         # Serialize the RDF graph into a string, 'pretty-xml' format makes it more readable
         rdf_string = rdf_graph.serialize(format='pretty-xml')
