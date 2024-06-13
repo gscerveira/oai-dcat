@@ -20,10 +20,13 @@ def fetch_data(url):
 
 
 # Define OAI-PMH endpoint route
-@app.get("/oai")
-@app.post("/oai")
-def oai(request: Request):
+@app.get("/oai/{dataset_id}")
+@app.post("/oai/{dataset_id}")
+def oai(request: Request, dataset_id: str):
     params = dict(request.query_params)
+
+    # Add dataset_id to the parameters as "set_", which is a parameter from the OAI-PMH protocol
+    params['set_'] = dataset_id
 
     # Making sure it uses the dcat_ap metadata prefix
     if 'metadataPrefix' not in params:
