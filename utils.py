@@ -105,20 +105,23 @@ class DatasetDCAT:
 
 def convert_to_dcat_ap(data, url):
     logging.debug("Starting convert_to_dcat_ap function")
+
+    # Add the URL to the data
+    data["url"] = url
     
-    ds = Dataset()
+    g = Graph()
 
     # Bind namespaces
-    ds.bind("dcat", DCAT)
-    ds.bind("DCT", DCT)
-    ds.bind("foaf", FOAF)
-    ds.bind("vcard", VCARD)
-    ds.bind("edp", EDP)
-    ds.bind("spdx", SPDX)
-    ds.bind("adms", ADMS)
-    ds.bind("dqv", DQV)
-    ds.bind("skos", SKOS)
-    ds.bind("schema", SCHEMA)
+    g.bind("dcat", DCAT)
+    g.bind("DCT", DCT)
+    g.bind("foaf", FOAF)
+    g.bind("vcard", VCARD)
+    g.bind("edp", EDP)
+    g.bind("spdx", SPDX)
+    g.bind("adms", ADMS)
+    g.bind("dqv", DQV)
+    g.bind("skos", SKOS)
+    g.bind("schema", SCHEMA)
 
     # Placeholder URI
     dataset_uri = url
@@ -144,32 +147,24 @@ def convert_to_dcat_ap(data, url):
             identifier=dataset.get("dataset", {}).get("metadata", {}).get("id"),
         )
 
-        # Create contact point and convert the field names to DCAT-AP
-        contact = dataset.get("dataset", {}).get("metadata", {}).get("contact")
-        contact_point = ContactPoint(
-            name=contact.get("name"),
-            email=contact.get("email"),
-            webpage=contact.get("webpage"),
+    # Create contact point and convert the field names to DCAT-AP
+    contact = data.get("dataset", {}).get("metadata", {}).get("contact")
+    contact_point = ContactPoint(
+        name=contact.get("name"),
+        email=contact.get("email"),
+        webpage=contact.get("webpage"),
+    )
+    dataset.contact_point = contact_point
+
+    # Create distributions and convert the field names to DCAT-AP
+    products = data.get("dataset", {}).get("products", {}).get("monthly", {})
+    distribution = Distribution(
+        access_url=url,
+        description=products.get("description"),
         )
-        metadata.contact_point = contact_point
+    dataset.add_distribution(distribution)
 
-        # Create distributions and convert the field names to DCAT-AP
-        products = dataset.get("dataset", {}).get("products", {}).get("monthly", {})
-        distribution = Distribution(
-            access_url=url,
-            description=products.get("description"),
-            )
-        metadata.add_distribution(distribution)
+    # Add dataset to graph
+    dataset.to_graph(g)
 
-        # Add dataset to graph
-        g = ds.graph(identifier=URIRef(metadata.uri))
-        logging.debug(f"Graph initialized with URI: {g.identifier}")
-        metadata.to_graph(g)
-        logging.debug(f"Graph {g.identifier} added. Current dataset has graphs: {[graph.identifier for graph in ds.graphs()]}")
-
-    for graph in ds.graphs():
-        logging.debug(f"Graph {graph.identifier} content:")
-        logging.debug(graph.serialize(format='turtle'))
-    logging.debug(f"Final dataset serialization: {ds.serialize(format='json-ld')}")
-
-    return ds
+    return g
