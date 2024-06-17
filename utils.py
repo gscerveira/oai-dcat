@@ -37,7 +37,7 @@ class Distribution:
         self.license = license
         self.identifier = identifier
 
-class Dataset:
+class DatasetDCAT:
     def __init__(self, uri, title=None, description=None, issued=None, identifier=None, contact_point=None):
         self.uri = uri
         self.title = title
@@ -54,6 +54,8 @@ class Dataset:
     def to_graph(self, g):
         dataset = URIRef(self.uri)
         g.add((dataset, RDF.type, DCAT.Dataset))
+        logging.debug(f"Adding to graph {g.identifier}: {dataset} a type {DCAT.Dataset}")
+
         if self.title:
             g.add((dataset, DCT.title, Literal(self.title)))
         if self.description:
@@ -66,6 +68,7 @@ class Dataset:
         if self.contact_point:
             contact_bnode = BNode()
             g.add((dataset, DCAT.contactPoint, contact_bnode))
+            g.add((contact_bnode, RDF.type, VCARD.Kind))
             if self.contact_point.name:
                 g.add((contact_bnode, VCARD.fn, Literal(self.contact_point.name)))
             if self.contact_point.email:
@@ -76,6 +79,7 @@ class Dataset:
         for dist in self.distributions:
             distribution_bnode = BNode()
             g.add((dataset, DCAT.distribution, distribution_bnode))
+            g.add((distribution_bnode, RDF.type, DCAT.Distribution))
             if dist.access_url:
                 g.add((distribution_bnode, DCAT.accessURL, URIRef(dist.access_url)))
             if dist.description:
@@ -103,9 +107,6 @@ class Dataset:
 
 def convert_to_dcat_ap(data, url):
     logging.debug("Starting convert_to_dcat_ap function")
-
-    # Add the URL to the data
-    data["url"] = url
     
     g = Graph()
 
@@ -122,35 +123,47 @@ def convert_to_dcat_ap(data, url):
     g.bind("schema", SCHEMA)
 
     # Placeholder URI
-    dataset_uri = "http://example.org/dataset/blue-tongue"
+    dataset_uri = url
+
     
-    # Create dataset and convert the field names to DCAT-AP
-    dataset = Dataset(
-        uri=dataset_uri,
-        title=data.get("dataset", {}).get("metadata", {}).get("label"),
-        description=data.get("dataset", {}).get("metadata", {}).get("description"),
-        issued=data.get("dataset", {}).get("metadata", {}).get("publication_date"),
-        identifier=data.get("dataset", {}).get("metadata", {}).get("id"),
-    )
+    if not isinstance(data, list):
+        data = [data]
 
-    # Create contact point and convert the field names to DCAT-AP
-    contact = data.get("dataset", {}).get("metadata", {}).get("contact")
-    contact_point = ContactPoint(
-        name=contact.get("name"),
-        email=contact.get("email"),
-        webpage=contact.get("webpage"),
-    )
-    dataset.contact_point = contact_point
-
-    # Create distributions and convert the field names to DCAT-AP
-    products = data.get("dataset", {}).get("products", {}).get("monthly", {})
-    distribution = Distribution(
-        access_url=url,
-        description=products.get("description"),
+    for dataset in data:
+        # Check if "dataset" key is present, if it isnt, wrap the dict in it
+        if "dataset" not in dataset:
+            dataset = {"dataset": dataset}
+        
+        # Add the URL to the data
+        dataset["url"] = url    
+        
+        # Create dataset and convert the field names to DCAT-AP
+        metadata = DatasetDCAT(
+            uri=f'{dataset_uri}/{dataset.get("dataset", {}).get("metadata", {}).get("id")}',
+            title=dataset.get("dataset", {}).get("metadata", {}).get("label"),
+            description=dataset.get("dataset", {}).get("metadata", {}).get("description"),
+            issued=dataset.get("dataset", {}).get("metadata", {}).get("publication_date"),
+            identifier=dataset.get("dataset", {}).get("metadata", {}).get("id"),
         )
-    dataset.add_distribution(distribution)
 
-    # Add dataset to graph
-    dataset.to_graph(g)
+        # Create contact point and convert the field names to DCAT-AP
+        contact = dataset.get("dataset", {}).get("metadata", {}).get("contact")
+        contact_point = ContactPoint(
+            name=contact.get("name"),
+            email=contact.get("email"),
+            webpage=contact.get("webpage"),
+        )
+        metadata.contact_point = contact_point
 
+        # Create distributions and convert the field names to DCAT-AP
+        products = dataset.get("dataset", {}).get("products", {}).get("monthly", {})
+        distribution = Distribution(
+            access_url=url,
+            description=products.get("description"),
+        )
+        metadata.add_distribution(distribution)
+
+        # Add dataset to graph
+        metadata.to_graph(g)
+    
     return g

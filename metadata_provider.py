@@ -6,7 +6,7 @@ import main
 from utils import convert_to_dcat_ap
 import logging
 
-BASE_URL = "https://sebastien-datalake.cmcc.it/api/v2/datasets/"
+BASE_URL = "https://sebastien-datalake.cmcc.it/api/v2/datasets"
 
 # Logging config
 logging.basicConfig(level=logging.DEBUG)
@@ -16,15 +16,20 @@ class MyMetadataProvider:
     # Method to list records, only method used by data.europa harvester
     def listRecords(self, metadataPrefix='dcat_ap', from_=None, until=None, set=None):
         logging.debug("Fetching data from API")
-        # Fetch data from the dataset endpoint
-        # TODO: Refactor to fetch from all endpoints, or get data directly if this code is integrated in the data lake system 
+        
+        if set:
+            dataset_url = f"{BASE_URL}/{set}"
+        else:
+            dataset_url = BASE_URL
+        
+        # Fetch data from the dataset endpoint 
         data = main.fetch_data(
-            f"{BASE_URL}{set}"
+            dataset_url
         )
         logging.debug(f"Fetched data: {data}")
 
         # Convert to RDF graph with proper DCAT-AP fields (URL is being used to fill the accessURL field)
-        rdf_graph = convert_to_dcat_ap(data, f"{BASE_URL}{set}")
+        rdf_graph = convert_to_dcat_ap(data, dataset_url)
 
         # Serialize the RDF graph into a string, 'pretty-xml' format makes it more readable
         rdf_string = rdf_graph.serialize(format='pretty-xml')
