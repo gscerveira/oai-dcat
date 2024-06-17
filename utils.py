@@ -1,4 +1,4 @@
-from rdflib import Graph, Literal, Namespace, RDF, URIRef, BNode
+from rdflib import Graph, Literal, Namespace, RDF, URIRef, BNode, Dataset
 from rdflib.namespace import DCAT, DCTERMS, FOAF, RDF
 import logging
 
@@ -37,7 +37,7 @@ class Distribution:
         self.license = license
         self.identifier = identifier
 
-class Dataset:
+class DatasetDCAT:
     def __init__(self, uri, title=None, description=None, issued=None, identifier=None, contact_point=None):
         self.uri = uri
         self.title = title
@@ -104,7 +104,7 @@ class Dataset:
 def convert_to_dcat_ap(data, url):
     logging.debug("Starting convert_to_dcat_ap function")
     
-    g = Graph()
+    ds = Dataset()
 
     # Bind namespaces
     g.bind("dcat", DCAT)
@@ -134,7 +134,7 @@ def convert_to_dcat_ap(data, url):
         dataset["url"] = url    
         
         # Create dataset and convert the field names to DCAT-AP
-        metadata = Dataset(
+        metadata = DatasetDCAT(
             uri=dataset_uri,
             title=dataset.get("dataset", {}).get("metadata", {}).get("label"),
             description=dataset.get("dataset", {}).get("metadata", {}).get("description"),
@@ -160,6 +160,7 @@ def convert_to_dcat_ap(data, url):
         metadata.add_distribution(distribution)
 
         # Add dataset to graph
+        g = ds.graph(identifier=URIRef(dataset_uri))
         metadata.to_graph(g)
 
-    return g
+    return ds
