@@ -19,8 +19,10 @@ class MyMetadataProvider:
         
         if set:
             dataset_url = f"{BASE_URL}/{set}"
+            format='pretty-xml'
         else:
             dataset_url = BASE_URL
+            format = 'json-ld'
         
         # Fetch data from the dataset endpoint 
         data = main.fetch_data(
@@ -32,7 +34,7 @@ class MyMetadataProvider:
         rdf_graph = convert_to_dcat_ap(data, dataset_url)
 
         # Serialize the RDF graph into a string, 'pretty-xml' format makes it more readable
-        rdf_string = rdf_graph.serialize(format='pretty-xml')
+        rdf_string = rdf_graph.serialize(format=format)
         logging.debug(f"RDF string: {rdf_string}")
 
         # Create a header (mandatory for OAI-PMH)
