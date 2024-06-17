@@ -54,6 +54,8 @@ class DatasetDCAT:
     def to_graph(self, g):
         dataset = URIRef(self.uri)
         g.add((dataset, RDF.type, DCAT.Dataset))
+        logging.debug(f"Adding to graph {g.identifier}: {dataset} a type {DCAT.Dataset}")
+
         if self.title:
             g.add((dataset, DCT.title, Literal(self.title)))
         if self.description:
@@ -107,16 +109,16 @@ def convert_to_dcat_ap(data, url):
     ds = Dataset()
 
     # Bind namespaces
-    g.bind("dcat", DCAT)
-    g.bind("DCT", DCT)
-    g.bind("foaf", FOAF)
-    g.bind("vcard", VCARD)
-    g.bind("edp", EDP)
-    g.bind("spdx", SPDX)
-    g.bind("adms", ADMS)
-    g.bind("dqv", DQV)
-    g.bind("skos", SKOS)
-    g.bind("schema", SCHEMA)
+    ds.bind("dcat", DCAT)
+    ds.bind("DCT", DCT)
+    ds.bind("foaf", FOAF)
+    ds.bind("vcard", VCARD)
+    ds.bind("edp", EDP)
+    ds.bind("spdx", SPDX)
+    ds.bind("adms", ADMS)
+    ds.bind("dqv", DQV)
+    ds.bind("skos", SKOS)
+    ds.bind("schema", SCHEMA)
 
     # Placeholder URI
     dataset_uri = url
@@ -135,7 +137,7 @@ def convert_to_dcat_ap(data, url):
         
         # Create dataset and convert the field names to DCAT-AP
         metadata = DatasetDCAT(
-            uri=dataset_uri,
+            uri=f'{dataset_uri}/{dataset.get("dataset", {}).get("metadata", {}).get("id")}',
             title=dataset.get("dataset", {}).get("metadata", {}).get("label"),
             description=dataset.get("dataset", {}).get("metadata", {}).get("description"),
             issued=dataset.get("dataset", {}).get("metadata", {}).get("publication_date"),
@@ -160,7 +162,14 @@ def convert_to_dcat_ap(data, url):
         metadata.add_distribution(distribution)
 
         # Add dataset to graph
-        g = ds.graph(identifier=URIRef(dataset_uri))
+        g = ds.graph(identifier=URIRef(metadata.uri))
+        logging.debug(f"Graph initialized with URI: {g.identifier}")
         metadata.to_graph(g)
+        logging.debug(f"Graph {g.identifier} added. Current dataset has graphs: {[graph.identifier for graph in ds.graphs()]}")
+
+    for graph in ds.graphs():
+        logging.debug(f"Graph {graph.identifier} content:")
+        logging.debug(graph.serialize(format='turtle'))
+    logging.debug(f"Final dataset serialization: {ds.serialize(format='json-ld')}")
 
     return ds
