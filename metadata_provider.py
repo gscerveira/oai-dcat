@@ -6,7 +6,7 @@ import main
 from utils import convert_to_dcat_ap
 import logging
 
-BASE_URL = "https://sebastien-datalake.cmcc.it/api/v2/datasets/"
+BASE_URL = "https://sebastien-datalake.cmcc.it/api/v2/datasets"
 
 # Logging config
 logging.basicConfig(level=logging.DEBUG)
@@ -18,7 +18,7 @@ class MyMetadataProvider:
         logging.debug("Fetching data from API")
         
         if set:
-            dataset_url = f"{BASE_URL}{set}"
+            dataset_url = f"{BASE_URL}/{set}"
         else:
             dataset_url = BASE_URL
         
