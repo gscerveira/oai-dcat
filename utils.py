@@ -1,4 +1,4 @@
-from rdflib import Graph, Literal, Namespace, RDF, URIRef, BNode, Dataset
+from rdflib import Graph, Literal, Namespace, RDF, URIRef, BNode
 from rdflib.namespace import DCAT, DCTERMS, FOAF, RDF
 import logging
 
@@ -105,9 +105,6 @@ class DatasetDCAT:
 
 def convert_to_dcat_ap(data, url):
     logging.debug("Starting convert_to_dcat_ap function")
-
-    # Add the URL to the data
-    data["url"] = url
     
     g = Graph()
 
@@ -147,24 +144,24 @@ def convert_to_dcat_ap(data, url):
             identifier=dataset.get("dataset", {}).get("metadata", {}).get("id"),
         )
 
-    # Create contact point and convert the field names to DCAT-AP
-    contact = data.get("dataset", {}).get("metadata", {}).get("contact")
-    contact_point = ContactPoint(
-        name=contact.get("name"),
-        email=contact.get("email"),
-        webpage=contact.get("webpage"),
-    )
-    dataset.contact_point = contact_point
-
-    # Create distributions and convert the field names to DCAT-AP
-    products = data.get("dataset", {}).get("products", {}).get("monthly", {})
-    distribution = Distribution(
-        access_url=url,
-        description=products.get("description"),
+        # Create contact point and convert the field names to DCAT-AP
+        contact = dataset.get("dataset", {}).get("metadata", {}).get("contact")
+        contact_point = ContactPoint(
+            name=contact.get("name"),
+            email=contact.get("email"),
+            webpage=contact.get("webpage"),
         )
-    dataset.add_distribution(distribution)
+        metadata.contact_point = contact_point
 
-    # Add dataset to graph
-    dataset.to_graph(g)
+        # Create distributions and convert the field names to DCAT-AP
+        products = dataset.get("dataset", {}).get("products", {}).get("monthly", {})
+        distribution = Distribution(
+            access_url=url,
+            description=products.get("description"),
+        )
+        metadata.add_distribution(distribution)
+
+        # Add dataset to graph
+        metadata.to_graph(g)
 
     return g
