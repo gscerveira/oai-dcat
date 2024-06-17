@@ -68,6 +68,7 @@ class DatasetDCAT:
         if self.contact_point:
             contact_bnode = BNode()
             g.add((dataset, DCAT.contactPoint, contact_bnode))
+            g.add((contact_bnode, RDF.type, VCARD.Kind))
             if self.contact_point.name:
                 g.add((contact_bnode, VCARD.fn, Literal(self.contact_point.name)))
             if self.contact_point.email:
@@ -78,6 +79,7 @@ class DatasetDCAT:
         for dist in self.distributions:
             distribution_bnode = BNode()
             g.add((dataset, DCAT.distribution, distribution_bnode))
+            g.add((distribution_bnode, RDF.type, DCAT.Distribution))
             if dist.access_url:
                 g.add((distribution_bnode, DCAT.accessURL, URIRef(dist.access_url)))
             if dist.description:
@@ -163,5 +165,5 @@ def convert_to_dcat_ap(data, url):
 
         # Add dataset to graph
         metadata.to_graph(g)
-
+    
     return g
