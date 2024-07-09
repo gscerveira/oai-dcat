@@ -140,7 +140,7 @@ def convert_to_dcat_ap_it(graph, catalog_uri):
         g.add((catalog, DCATAPIT.dataset, dataset_uri))
 
         # Add mandatory fields with placeholder values
-        g.add((dcatapit_dataset_node, DCTERMS.theme, URIRef("http://publications.europa.eu/resource/authority/data-theme/AGRI")))
+        g.add((dcatapit_dataset_node, DCAT.theme, URIRef("http://publications.europa.eu/resource/authority/data-theme/AGRI")))
         g.add((dcatapit_dataset_node, DCTERMS.rightsHolder, URIRef("https://www.cmcc.it/")))
         g.add((dcatapit_dataset_node, DCTERMS.accrualPeriodicity, URIRef("http://publications.europa.eu/resource/authority/frequency/WEEKLY")))
 
