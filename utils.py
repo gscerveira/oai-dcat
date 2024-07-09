@@ -16,6 +16,8 @@ ADMS = Namespace("http://www.w3.org/ns/adms#")
 DQV = Namespace("http://www.w3.org/ns/dqv#")
 SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
 SCHEMA = Namespace("http://schema.org/")
+# Namespace for DCAT-AP IT
+DCATAPIT = Namespace("http://dati.gov.it/onto/dcatapit#")
 
 # Define classes for DCAT-AP entities (Dataset, Distribution and ContactPoint)
 
@@ -104,6 +106,53 @@ class DatasetDCAT:
                 g.add((distribution_bnode, DCTERMS.identifier, Literal(dist.identifier)))
 
         return g
+    
+# Function to convert to DCAT-AP IT format
+def convert_to_dcat_ap_it(graph, catalog_uri):
+    g = graph
+
+    # Bind DCATAPIT namespace to graph
+    g.bind("dcatapit", DCATAPIT)
+
+    # Create catalog and add it to the graph
+    catalog = URIRef(catalog_uri)
+    g.add((catalog, RDF.type, DCATAPIT.Catalog))
+    g.add((catalog, DCTERMS.title, Literal("Sebastien Catalog")))
+    g.add((catalog, DCTERMS.description, Literal("A catalog of Sebastien datasets")))
+    g.add((catalog, DCTERMS.publisher, URIRef("https://www.cmcc.it/")))
+    g.add((catalog, DCTERMS.modified, Literal("2023-07-09", datatype=DCTERMS.W3CDTF)))
+
+    # Find all datasets in graph
+    for dataset_uri in g.subjects(RDF.type, DCAT.Dataset):
+        # Create dcatapit:Dataset node
+        dcatapit_dataset_node = BNode()
+        g.add((dcatapit_dataset_node, RDF.type, DCATAPIT.Dataset))
+
+        # Wrap existing dataset elements under dcatapit:Dataset
+        for s, p, o in g.triples((dataset_uri, None, None)):
+            g.remove((dataset_uri, p, o))
+            g.add((dcatapit_dataset_node, p, o))
+
+        # Add dcat:dataset relation to the new dcatapit:Dataset node
+        g.add((dataset_uri, DCAT.dataset, dcatapit_dataset_node))
+
+        # Add dcatapit:Dataset to catalog
+        g.add((catalog, DCATAPIT.dataset, dataset_uri))
+
+        # Add mandatory fields with placeholder values
+        g.add((dcatapit_dataset_node, DCTERMS.theme, URIRef("http://publications.europa.eu/resource/authority/data-theme/AGRI")))
+        g.add((dcatapit_dataset_node, DCTERMS.rightsHolder, URIRef("https://www.cmcc.it/")))
+        g.add((dcatapit_dataset_node, DCTERMS.accrualPeriodicity, URIRef("http://publications.europa.eu/resource/authority/frequency/WEEKLY")))
+
+        # Change Distribution namespace to DCATAPIT
+        for s, p, o in g.triples((dcatapit_dataset_node, DCAT.distribution, None)):
+            g.remove((s, p, o))
+            g.add((s, DCATAPIT.distribution, o))
+            g.add((o, RDF.type, DCATAPIT.Distribution))
+
+    return g
+
+
 
 def convert_to_dcat_ap(data, url):
     logging.debug("Starting convert_to_dcat_ap function")
