@@ -130,14 +130,15 @@ def convert_to_dcat_ap_it(graph, catalog_uri):
 
         # Wrap existing dataset elements under dcatapit:Dataset
         for s, p, o in g.triples((dataset_uri, None, None)):
-            g.remove((dataset_uri, p, o))
-            g.add((dcatapit_dataset_node, p, o))
+            if p != RDF.type:
+                g.remove((dataset_uri, p, o))
+                g.add((dcatapit_dataset_node, p, o))
+                
+        # Remove original dcat:Dataset node
+        g.remove((dataset_uri, RDF.type, DCAT.Dataset))
 
-        # Add dcat:dataset relation to the new dcatapit:Dataset node
-        g.add((dataset_uri, DCAT.dataset, dcatapit_dataset_node))
-
-        # Add dcatapit:Dataset to catalog
-        g.add((catalog, DCATAPIT.dataset, dataset_uri))
+        # Add new dcat:dataset relation to the catalog, pointing to the dcatapit:Dataset
+        g.add((catalog, DCAT.dataset, dcatapit_dataset_node))
 
         # Add mandatory fields with placeholder values
         g.add((dcatapit_dataset_node, DCAT.theme, URIRef("http://publications.europa.eu/resource/authority/data-theme/AGRI")))
