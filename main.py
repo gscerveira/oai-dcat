@@ -3,6 +3,8 @@ from fastapi import FastAPI, Request, Response
 import httpx
 import oai_server
 import re
+from metadata_provider import BASE_URL
+from utils import convert_to_dcat_ap, convert_to_dcat_ap_it
 
 # Logging config
 logging.basicConfig(level=logging.DEBUG)
@@ -55,6 +57,20 @@ def oai_all_datasets(request: Request):
     # Replace date in datestamp by empty string
     response = re.sub(b'<datestamp>.*</datestamp>', b'', response)
     return Response(content=response, media_type="text/xml")
+
+# Endpoint for generating DCAT-AP IT catalog
+@app.get("/dcatapit")
+def dcatapit(request: Request):
+    data = fetch_data(BASE_URL)
+    dcatap_graph = convert_to_dcat_ap(data, BASE_URL)
+    dcatapit_graph = convert_to_dcat_ap_it(dcatap_graph, BASE_URL)
+    response = dcatapit_graph.serialize(format='pretty-xml')
+
+    return Response(content=response, media_type="text/xml")
+
+    
+
+
 
 
 # To run, use uvicorn main:app --reload
