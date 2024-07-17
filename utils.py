@@ -1,6 +1,7 @@
 from rdflib import Graph, Literal, Namespace, RDF, URIRef, BNode
 from rdflib.namespace import DCAT, DCTERMS, FOAF, RDF
 import logging
+from datetime import datetime
 
 # Logging config
 logging.basicConfig(level=logging.DEBUG)
@@ -120,7 +121,7 @@ def convert_to_dcat_ap_it(graph, catalog_uri):
     g.add((catalog, DCTERMS.title, Literal("Sebastien Catalog")))
     g.add((catalog, DCTERMS.description, Literal("A catalog of Sebastien datasets")))
     g.add((catalog, DCTERMS.publisher, URIRef("https://www.cmcc.it/")))
-    g.add((catalog, DCTERMS.modified, Literal("2023-07-09", datatype=DCTERMS.W3CDTF)))
+    g.add((catalog, DCTERMS.modified, Literal(datetime.now().strftime("%Y-%m-%d"), datatype=DCTERMS.W3CDTF)))
 
     # Find all datasets in graph
     for dataset_uri in g.subjects(RDF.type, DCAT.Dataset):
