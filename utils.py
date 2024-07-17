@@ -3,6 +3,16 @@ from rdflib.namespace import DCAT, DCTERMS, FOAF, RDF
 import logging
 from datetime import datetime
 
+# Dictionary with accrualPeriodicity values for somw known datasets
+ACCRUAL_PERIODICITY = {
+    "blue-tongue" : "AS_NEEDED",
+    "iot-animal" : "HOURLY",
+    "pasture" : "BIWEEKLY",
+    "pi" : "DAILY",
+    "pi-long-term" : "AS_NEEDED",
+    "thi" : "DAILY"
+}
+
 # Logging config
 logging.basicConfig(level=logging.DEBUG)
 
@@ -144,8 +154,13 @@ def convert_to_dcat_ap_it(graph, catalog_uri):
         # Add mandatory fields with placeholder values
         g.add((dcatapit_dataset_node, DCAT.theme, URIRef("http://publications.europa.eu/resource/authority/data-theme/AGRI")))
         g.add((dcatapit_dataset_node, DCTERMS.rightsHolder, URIRef("https://www.cmcc.it/")))
-        g.add((dcatapit_dataset_node, DCTERMS.accrualPeriodicity, URIRef("http://publications.europa.eu/resource/authority/frequency/WEEKLY")))
-
+        # Add accrualPeriodicity based on dataset name
+        dataset_name = dataset_uri.split("/")[-1]
+        if dataset_name in ACCRUAL_PERIODICITY:
+            g.add((dcatapit_dataset_node, DCTERMS.accrualPeriodicity, URIRef(f"http://publications.europa.eu/resource/authority/frequency/{ACCRUAL_PERIODICITY[dataset_name]}")))
+        else:
+            g.add((dcatapit_dataset_node, DCTERMS.accrualPeriodicity, URIRef("http://publications.europa.eu/resource/authority/frequency/UNKNOWN")))
+        
         # Change Distribution namespace to DCATAPIT
         for s, p, o in g.triples((dcatapit_dataset_node, DCAT.distribution, None)):
             g.remove((s, p, o))
