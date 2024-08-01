@@ -4,7 +4,7 @@ import httpx
 import oai_server
 import re
 from metadata_provider import BASE_URL
-from utils import convert_to_dcat_ap, convert_to_dcat_ap_it
+from utils import convert_to_dcat_ap, convert_to_dcat_ap_it, serialize_and_concatenate_graphs
 
 # Logging config
 logging.basicConfig(level=logging.DEBUG)
@@ -62,9 +62,11 @@ def oai_all_datasets(request: Request):
 @app.get("/dcatapit")
 def dcatapit(request: Request):
     data = fetch_data(BASE_URL)
-    dcatap_graph = convert_to_dcat_ap(data, BASE_URL)
-    dcatapit_graph = convert_to_dcat_ap_it(dcatap_graph, BASE_URL)
-    response = dcatapit_graph.serialize(format='pretty-xml')
+    #dcatap_graph = convert_to_dcat_ap(data, BASE_URL)
+    #dcatapit_graph = convert_to_dcat_ap_it(data, BASE_URL)
+    catalog_graph, datasets_graph, distributions_graph = convert_to_dcat_ap_it(data, BASE_URL)
+    #response = dcatapit_graph.serialize(format='pretty-xml')
+    response = serialize_and_concatenate_graphs(catalog_graph, datasets_graph, distributions_graph)
 
     return Response(content=response, media_type="text/xml")
 
