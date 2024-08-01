@@ -40,9 +40,8 @@ class ContactPoint:
         self.webpage = webpage
 
 class Distribution:
-    def __init__(self, uri, access_url=None, description=None, download_url=None,
+    def __init__(self, access_url=None, description=None, download_url=None,
                  media_type=None, format=None, rights=None, license=None, identifier=None):
-        self.uri = uri
         self.access_url = access_url
         self.description = description
         self.download_url = download_url
