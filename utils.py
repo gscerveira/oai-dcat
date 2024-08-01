@@ -124,14 +124,24 @@ def convert_to_dcat_ap_it(graph, catalog_uri):
 
     # Bind DCATAPIT namespace to graph
     g.bind("dcatapit", DCATAPIT)
+    g.bind("foaf", FOAF)
 
     # Create catalog and add it to the graph
     catalog = URIRef(catalog_uri)
     g.add((catalog, RDF.type, DCATAPIT.Catalog))
     g.add((catalog, DCTERMS.title, Literal("Sebastien Catalog")))
     g.add((catalog, DCTERMS.description, Literal("A catalog of Sebastien datasets")))
-    g.add((catalog, DCTERMS.publisher, URIRef("https://www.cmcc.it/")))
     g.add((catalog, DCTERMS.modified, Literal(datetime.now().strftime("%Y-%m-%d"), datatype=DCTERMS.W3CDTF)))
+    
+    # Create catalog dct:publisher node
+    catalog_publisher_node = BNode()
+    g.add((catalog, DCTERMS.publisher, catalog_publisher_node))
+    g.add((catalog_publisher_node, RDF.type, FOAF.Agent))
+    g.add((catalog_publisher_node, RDF.type, DCATAPIT.Agent))
+    g.add((catalog_publisher_node, FOAF.name, Literal("CMCC Foundation")))
+    g.add((catalog_publisher_node, DCTERMS.identifier, Literal("XW88C90Q")))
+    g.add((catalog_publisher_node, FOAF.homepage, URIRef("https://www.cmcc.it")))
+    g.add((catalog_publisher_node, FOAF.mbox, URIRef("mailto:dds-support@cmcc.it")))
 
     # Find all datasets in graph
     for dataset_uri in g.subjects(RDF.type, DCAT.Dataset):
@@ -160,6 +170,14 @@ def convert_to_dcat_ap_it(graph, catalog_uri):
             g.add((dcatapit_dataset_node, DCTERMS.accrualPeriodicity, URIRef(f"http://publications.europa.eu/resource/authority/frequency/{ACCRUAL_PERIODICITY[dataset_name]}")))
         else:
             g.add((dcatapit_dataset_node, DCTERMS.accrualPeriodicity, URIRef("http://publications.europa.eu/resource/authority/frequency/UNKNOWN")))
+            
+        # Add publisher node to the dataset
+        dataset_publisher_node = BNode()
+        g.add((dcatapit_dataset_node, DCTERMS.publisher, dataset_publisher_node))
+        g.add((dataset_publisher_node, RDF.type, FOAF.Agent))
+        g.add((dataset_publisher_node, RDF.type, DCATAPIT.Agent))
+        g.add((dataset_publisher_node, FOAF.name, Literal("CMCC Foundation")))
+        g.add((dataset_publisher_node, DCTERMS.identifier, Literal("XW88C90Q")))
         
         # Change Distribution namespace to DCATAPIT
         for s, p, o in g.triples((dcatapit_dataset_node, DCAT.distribution, None)):
