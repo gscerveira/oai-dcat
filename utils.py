@@ -100,9 +100,9 @@ class DatasetDCAT:
         logging.debug(f"Adding to graph {g.identifier}: {dataset} a type {DCAT.Dataset}")
 
         if self.title:
-            g.add((dataset, DCT.title, Literal(self.title)))
+            g.add((dataset, DCTERMS.title, Literal(self.title)))
         if self.description:
-            g.add((dataset, DCT.description, Literal(self.description)))
+            g.add((dataset, DCTERMS.description, Literal(self.description)))
         if self.issued:
             g.add((dataset, DCTERMS.issued, Literal(self.issued, datatype=DCTERMS.W3CDTF)))
         if self.identifier:
@@ -223,9 +223,9 @@ class DatasetDCATAPIT:
         dataset = URIRef(self.uri)
         g.add((dataset, RDF.type, DCATAPIT.Dataset))
         if self.title:
-            g.add((dataset, DCT.title, Literal(self.title)))
+            g.add((dataset, DCTERMS.title, Literal(self.title)))
         if self.description:
-            g.add((dataset, DCT.description, Literal(self.description)))
+            g.add((dataset, DCTERMS.description, Literal(self.description)))
         if self.issued:
             g.add((dataset, DCTERMS.issued, Literal(self.issued, datatype=DCTERMS.W3CDTF)))
         if self.identifier:
@@ -295,17 +295,18 @@ def convert_to_dcat_ap_it(data, url):
     # Create catalog
     catalog_uri = URIRef(url)
     catalog_graph.add((catalog_uri, RDF.type, DCATAPIT.Catalog))
-    catalog_graph.add((catalog_uri, DCT.title, Literal("Sebastien Catalog")))
-    catalog_graph.add((catalog_uri, DCT.description, Literal("A catalog of Sebastien datasets")))
-    catalog_graph.add((catalog_uri, DCT.modified, Literal(datetime.now().strftime("%Y-%m-%d"), datatype=DCT.W3CDTF)))
+    catalog_graph.add((catalog_uri, DCTERMS.title, Literal("Sebastien Catalog")))
+    catalog_graph.add((catalog_uri, DCTERMS.description, Literal("A catalog of Sebastien datasets")))
+    catalog_graph.add((catalog_uri, DCTERMS.language, URIRef("http://publications.europa.eu/resource/authority/language/ITA")))
+    catalog_graph.add((catalog_uri, DCTERMS.modified, Literal(datetime.now().strftime("%Y-%m-%d"), datatype=DCTERMS.W3CDTF)))
     
     # Add publisher information
     publisher = BNode()
-    catalog_graph.add((catalog_uri, DCT.publisher, publisher))
+    catalog_graph.add((catalog_uri, DCTERMS.publisher, publisher))
     catalog_graph.add((publisher, RDF.type, FOAF.Agent))
     catalog_graph.add((publisher, RDF.type, DCATAPIT.Agent))
     catalog_graph.add((publisher, FOAF.name, Literal("CMCC Foundation")))
-    catalog_graph.add((publisher, DCT.identifier, Literal("XW88C90Q")))
+    catalog_graph.add((publisher, DCTERMS.identifier, Literal("XW88C90Q")))
     catalog_graph.add((publisher, FOAF.homepage, URIRef("https://www.cmcc.it")))
     catalog_graph.add((publisher, FOAF.mbox, URIRef("mailto:dds-support@cmcc.it")))
     
@@ -320,10 +321,10 @@ def convert_to_dcat_ap_it(data, url):
         
         # Create dataset
         datasets_graph.add((dataset_uri, RDF.type, DCATAPIT.Dataset))
-        datasets_graph.add((dataset_uri, DCT.title, Literal(dataset.get("dataset", {}).get("metadata", {}).get("label"))))
-        datasets_graph.add((dataset_uri, DCT.description, Literal(dataset.get("dataset", {}).get("metadata", {}).get("description"))))
-        datasets_graph.add((dataset_uri, DCT.issued, Literal(dataset.get("dataset", {}).get("metadata", {}).get("publication_date"), datatype=DCT.W3CDTF)))
-        datasets_graph.add((dataset_uri, DCT.identifier, Literal(dataset_id)))
+        datasets_graph.add((dataset_uri, DCTERMS.title, Literal(dataset.get("dataset", {}).get("metadata", {}).get("label"))))
+        datasets_graph.add((dataset_uri, DCTERMS.description, Literal(dataset.get("dataset", {}).get("metadata", {}).get("description"))))
+        datasets_graph.add((dataset_uri, DCTERMS.issued, Literal(dataset.get("dataset", {}).get("metadata", {}).get("publication_date"), datatype=DCTERMS.W3CDTF)))
+        datasets_graph.add((dataset_uri, DCTERMS.identifier, Literal(f"XW88C90Q:{dataset_id}")))
         
         # Add contact point
         contact = dataset.get("dataset", {}).get("metadata", {}).get("contact")
@@ -335,13 +336,21 @@ def convert_to_dcat_ap_it(data, url):
         datasets_graph.add((contact_point, VCARD.hasURL, URIRef(contact.get("webpage"))))
         
         # Create distribution
-        products = dataset.get("dataset", {}).get("products", {}).get("monthly", {})
-        distribution_uri = URIRef(f'{url}/{dataset_id}/distribution')
+        #products = dataset.get("dataset", {}).get("metadata", {}).get("products", {}).get("monthly", {})
+        distribution_uri = URIRef(f'{url}/{dataset_id}')
         datasets_graph.add((dataset_uri, DCAT.distribution, distribution_uri))
-        distributions_graph.add((distribution_uri, RDF.type, DCATAPIT.Distribution))
+        distributions_graph.add((distribution_uri, RDF.type, DCAT.Distribution))
         distributions_graph.add((distribution_uri, DCAT.accessURL, distribution_uri))
-        distributions_graph.add((distribution_uri, DCT.description, Literal(products.get("description"))))
-    
+        distributions_graph.add((distribution_uri, DCTERMS.description, Literal(dataset.get("dataset", {}).get("metadata", {}).get("description"))))
+        license_uri = URIRef("https://w3id.org/italia/controlled-vocabulary/licences/A21_CCBY40")
+        license_document = BNode()
+        distributions_graph.add((distribution_uri, DCTERMS.license, license_document))
+        distributions_graph.add((license_document, RDF.type, DCT.LicenseDocument))
+        distributions_graph.add((license_document, DCTERMS.type, URIRef("http://purl.org/adms/licencetype/Attribution")))
+        distributions_graph.add((license_document, FOAF.name, Literal("Creative Commons Attribuzione 4.0 Internazionale (CC BY 4.0)")))
+        distributions_graph.add((distribution_uri, DCTERMS.format, URIRef("http://publications.europa.eu/resource/authority/file-type/JSON")))
+        distributions_graph.add((distribution_uri, RDF.type, DCATAPIT.Distribution))
+        
     return catalog_graph, datasets_graph, distributions_graph
 
 def serialize_and_concatenate_graphs(catalog_graph, datasets_graph, distributions_graph):
