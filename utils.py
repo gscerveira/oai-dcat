@@ -320,10 +320,29 @@ def convert_to_dcat_ap_it(data, url):
         
         # Create dataset
         datasets_graph.add((dataset_uri, RDF.type, DCATAPIT.Dataset))
+        datasets_graph.add((dataset_uri, RDF.type, DCAT.Dataset))
         datasets_graph.add((dataset_uri, DCTERMS.title, Literal(dataset.get("dataset", {}).get("metadata", {}).get("label"))))
         datasets_graph.add((dataset_uri, DCTERMS.description, Literal(dataset.get("dataset", {}).get("metadata", {}).get("description"))))
         datasets_graph.add((dataset_uri, DCTERMS.issued, Literal(dataset.get("dataset", {}).get("metadata", {}).get("publication_date"), datatype=DCTERMS.W3CDTF)))
         datasets_graph.add((dataset_uri, DCTERMS.identifier, Literal(f"XW88C90Q:{dataset_id}")))
+        # Add dct:modified, dcat:theme, dct:rightsHolder and dct:accrualPeriodicity
+        datasets_graph.add((dataset_uri, DCTERMS.modified, Literal(datetime.now().strftime("%Y-%m-%d"), datatype=DCTERMS.W3CDTF)))
+        datasets_graph.add((dataset_uri, DCAT.theme, URIRef("http://publications.europa.eu/resource/authority/data-theme/AGRI")))
+        datasets_graph.add((dataset_uri, DCTERMS.accrualPeriodicity, URIRef(f"http://publications.europa.eu/resource/authority/frequency/{ACCRUAL_PERIODICITY.get(dataset_id)}")))
+        # Add publisher info on dataset
+        publisher_dataset = BNode()
+        datasets_graph.add((dataset_uri, DCTERMS.publisher, publisher_dataset))
+        datasets_graph.add((publisher_dataset, RDF.type, FOAF.Agent))
+        datasets_graph.add((publisher_dataset, RDF.type, DCATAPIT.Agent))
+        datasets_graph.add((publisher_dataset, FOAF.name, Literal("CMCC Foundation")))
+        datasets_graph.add((publisher_dataset, DCTERMS.identifier, Literal("XW88C90Q")))
+        # Add rights holder BNode
+        rights_holder = BNode()
+        datasets_graph.add((dataset_uri, DCTERMS.rightsHolder, rights_holder))
+        datasets_graph.add((rights_holder, DCATAPIT.Agent, URIRef("XW88C90Q")))
+        datasets_graph.add((rights_holder, FOAF.name, Literal("CMCC Foundation")))
+        
+        
         
         # Add contact point
         contact = dataset.get("dataset", {}).get("metadata", {}).get("contact")
@@ -366,6 +385,12 @@ def serialize_and_concatenate_graphs(catalog_graph, datasets_graph, distribution
     
     # Concatenate the strings
     final_str = catalog_str.rsplit('</rdf:RDF>', 1)[0] + datasets_str + distributions_str + '</rdf:RDF>'
+    
+    # Manually add the vcard namespace declaration
+    final_str = final_str.replace(
+        '<rdf:RDF',
+        '<rdf:RDF xmlns:vcard="http://www.w3.org/2006/vcard/ns#"'
+    )
     
     return final_str
 
