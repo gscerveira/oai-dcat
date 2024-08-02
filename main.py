@@ -64,9 +64,9 @@ def dcatapit(request: Request):
     data = fetch_data(BASE_URL)
     #dcatap_graph = convert_to_dcat_ap(data, BASE_URL)
     #dcatapit_graph = convert_to_dcat_ap_it(data, BASE_URL)
-    catalog_graph, datasets_graph, distributions_graph = convert_to_dcat_ap_it(data, BASE_URL)
+    catalog_graph, datasets_graph, distributions_graph, vcard_graph = convert_to_dcat_ap_it(data, BASE_URL)
     #response = dcatapit_graph.serialize(format='pretty-xml')
-    response = serialize_and_concatenate_graphs(catalog_graph, datasets_graph, distributions_graph)
+    response = serialize_and_concatenate_graphs(catalog_graph, datasets_graph, distributions_graph, vcard_graph)
 
     return Response(content=response, media_type="text/xml")
 
