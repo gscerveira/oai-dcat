@@ -392,15 +392,6 @@ def serialize_and_concatenate_graphs(catalog_graph, datasets_graph, distribution
     datasets_str = datasets_graph.serialize(format='pretty-xml')
     distributions_str = distributions_graph.serialize(format='pretty-xml')
     vcard_str =  vcard_graph.serialize(format='pretty-xml')
-    
-    # Manually add the rdf:type if it's not present
-    #catalog_uri = next(catalog_graph.subjects(RDF.type, DCAT.Catalog))
-    #type_string = '<rdf:type rdf:resource="http://www.w3.org/ns/dcat#Catalog"/>'
-    
-    #if type_string not in catalog_str:
-    #    catalog_str = catalog_str.replace(f'<dcatapit:Catalog rdf:about="{catalog_uri}">', 
-    #                                      f'<dcatapit:Catalog rdf:about="{catalog_uri}">\n    {type_string}', 1)
-    #    print(catalog_str)
 
     
     # Remove XML headers and opening <rdf:RDF> tags from datasets and distributions and vcard strings
